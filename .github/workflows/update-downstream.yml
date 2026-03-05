@@ -35,18 +35,18 @@ jobs:
       - name: Checkout Target Repo
         uses: actions/checkout@v4
         with:
-          repository: adrianc-ngp/k8s-apps.git
+          repository: adrianc-ngp/k8s-apps
           token: ${{ secrets.PAT_TOKEN }} # Needs 'repo' scope
-          path: 'target-repo'
+          path: 'apps'
 
       - name: Update YAML Files
         run: |
           NEW_TAG=${{ steps.create_tag.outputs.tag_name }}
-          cd target-repo
+          cd apps
           
           # Find all yaml files in the specific path pattern
           # The regex looks for 'branch: "..."' and replaces the value
-          find apps/dwh-loader/*/prod -name "*.yaml" -type f -exec sed -i "s/branch: \".*\"/branch: \"$NEW_TAG\"/g" {} +
+          find dwh-loader/*/prod -name "*.yaml" -type f -exec sed -i "s/branch: \".*\"/branch: \"$NEW_TAG\"/g" {} +
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v6
