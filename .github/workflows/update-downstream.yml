@@ -32,8 +32,15 @@ jobs:
             TARGET_COMMIT=$(git rev-parse --short HEAD)
           fi
           
-          git tag $TARGET_COMMIT
-          git push origin $TARGET_COMMIT
+          # Check if tag already exists
+          if git rev-parse "$TARGET_COMMIT" >/dev/null 2>&1; then
+            echo "Tag $TARGET_COMMIT already exists, skipping tag creation"
+          else
+            git tag $TARGET_COMMIT
+            git push origin $TARGET_COMMIT
+            echo "Created and pushed tag $TARGET_COMMIT"
+          fi
+          
           echo "tag_name=$TARGET_COMMIT" >> $GITHUB_OUTPUT
 
       - name: Checkout Target Repo
