@@ -7,6 +7,10 @@ on:
         description: 'Commit ID to tag (leaves empty for latest)'
         required: false
         default: ''
+      product:
+        description: 'Product name (e.g. school, work)'
+        required: false
+        default: '*'  
 
 jobs:
   tag-and-update:
@@ -44,7 +48,7 @@ jobs:
           NEW_TAG=${{ steps.create_tag.outputs.tag_name }}
           cd target-repo
           # The regex looks for 'branch: "..."' and replaces the value
-          find apps/dwh-loader/*/prod -name "*.yaml" -type f -exec sed -i "s/branch: \".*\"/branch: \"$NEW_TAG\"/g" {} +
+          find apps/dwh-loader/${{ github.event.inputs.product }}/prod -name "*.yaml" -type f -exec sed -i "s/branch: \".*\"/branch: \"$NEW_TAG\"/g" {} +
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v6
