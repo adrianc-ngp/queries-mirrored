@@ -37,16 +37,18 @@ jobs:
         with:
           repository: adrianc-ngp/k8s-apps
           token: ${{ secrets.PAT_TOKEN }} # Needs 'repo' scope
-          path: 'apps'
+          path: 'target-repo'
 
       - name: Update YAML Files
         run: |
           NEW_TAG=${{ steps.create_tag.outputs.tag_name }}
-          cd apps
-          
+          cd target-repo
+          pwd
+          ls -lrt
+          # Example: Update all values.yaml files in dwh-loader directories
           # Find all yaml files in the specific path pattern
           # The regex looks for 'branch: "..."' and replaces the value
-          find dwh-loader/*/prod -name "*.yaml" -type f -exec sed -i "s/branch: \".*\"/branch: \"$NEW_TAG\"/g" {} +
+          find . apps/dwh-loader/*/prod -name "*.yaml" -type f -exec sed -i "s/branch: \".*\"/branch: \"$NEW_TAG\"/g" {} +
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v6
