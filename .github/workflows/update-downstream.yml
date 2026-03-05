@@ -1,0 +1,60 @@
+name: Update Downstream Version
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit_id:
+        description: 'Commit ID to tag (leaves empty for latest)'
+        required: false
+        default: ''
+
+jobs:
+  tag-and-update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create and Push Tag
+        id: create_tag
+        run: |
+          # Determine version (using a timestamp-based tag for uniqueness, or customize this)
+          # NEW_TAG="v$(date +'%Y%m%d.%H%M%S')"
+          TARGET_COMMIT="${{ github.event.inputs.commit_id }}"
+          
+          if [ -z "$TARGET_COMMIT" ]; then
+            TARGET_COMMIT=$(git rev-parse HEAD)
+          fi
+          
+          git tag $TARGET_COMMIT
+          git push origin $TARGET_COMMIT
+          echo "tag_name=$TARGET_COMMIT" >> $GITHUB_OUTPUT
+
+      - name: Checkout Target Repo
+        uses: actions/checkout@v4
+        with:
+          repository: adrianc-ngp/k8s-apps.git
+          token: ${{ secrets.PAT_TOKEN }} # Needs 'repo' scope
+          path: 'target-repo'
+
+      - name: Update YAML Files
+        run: |
+          NEW_TAG=${{ steps.create_tag.outputs.tag_name }}
+          cd target-repo
+          
+          # Find all yaml files in the specific path pattern
+          # The regex looks for 'branch: "..."' and replaces the value
+          find apps/dwh-loader/*/prod -name "*.yaml" -type f -exec sed -i "s/branch: \".*\"/branch: \"$NEW_TAG\"/g" {} +
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          path: 'target-repo'
+          token: ${{ secrets.PAT_TOKEN }}
+          commit-message: "chore: update dwh-loader to ${{ steps.create_tag.outputs.tag_name }}"
+          title: "Update dwh-loader version to ${{ steps.create_tag.outputs.tag_name }}"
+          body: "Automated update triggered from source repository."
+          branch: "update-dwh-${{ steps.create_tag.outputs.tag_name }}"
+          base: "main" # Change to your target's default branch
