@@ -25,7 +25,7 @@ jobs:
           TARGET_COMMIT="${{ github.event.inputs.commit_id }}"
           
           if [ -z "$TARGET_COMMIT" ]; then
-            TARGET_COMMIT=$(git rev-parse HEAD)
+            TARGET_COMMIT=$(git rev-parse --short HEAD)
           fi
           
           git tag $TARGET_COMMIT
